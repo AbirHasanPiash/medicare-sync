@@ -34,6 +34,7 @@
     "is-number": "^7.0.0",
     "listr2": "^9.0.5",
     "log-update": "^6.1.0",
+    "lucide-react": "^0.577.0",
     "micromatch": "^4.0.8",
     "mimic-function": "^5.0.1",
     "onetime": "^7.0.0",

@@ -1,0 +1,171 @@
+import { useState, useContext } from 'react';
+import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
+import { AuthContext } from '../contexts/AuthContext';
+import { 
+  Menu, X, LogOut, Home, Users, Calendar, 
+  Clock, CreditCard, Activity, FileText, Stethoscope 
+} from 'lucide-react';
+
+const DashboardLayout = () => {
+  const { user, logout } = useContext(AuthContext);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
+
+  // Helper function to determine if a link is active
+  const isActive = (path) => {
+    if (path === '/dashboard' && location.pathname === '/dashboard') return true;
+    if (path !== '/dashboard' && location.pathname.startsWith(path)) return true;
+    return false;
+  };
+
+  // Reusable NavLink component for consistent styling and mobile-closing
+  const NavItem = ({ to, icon: Icon, label }) => {
+    const active = isActive(to);
+    return (
+      <Link
+        to={to}
+        onClick={() => setIsSidebarOpen(false)}
+        className={`flex items-center gap-3 px-4 py-3 mb-1 font-medium rounded-xl transition-all duration-200 ${
+          active
+            ? 'bg-teal-50 text-teal-700'
+            : 'text-slate-600 hover:bg-slate-50 hover:text-teal-600'
+        }`}
+      >
+        <Icon className={`w-5 h-5 ${active ? 'text-teal-600' : 'text-slate-400'}`} />
+        {label}
+      </Link>
+    );
+  };
+
+  const renderNavLinks = () => {
+    switch (user?.role) {
+      case 'ADMIN':
+        return (
+          <>
+            <NavItem to="/dashboard/revenue" icon={CreditCard} label="Revenue" />
+            <NavItem to="/dashboard/users" icon={Users} label="Manage Users" />
+          </>
+        );
+      case 'DOCTOR':
+        return (
+          <>
+            <NavItem to="/dashboard/schedule" icon={Calendar} label="My Schedule" />
+            <NavItem to="/dashboard/patients" icon={Users} label="Patient Records" />
+          </>
+        );
+      case 'STAFF':
+        return (
+          <>
+            <NavItem to="/dashboard/queue" icon={Clock} label="Queue Management" />
+            <NavItem to="/dashboard/billing" icon={CreditCard} label="Billing" />
+          </>
+        );
+      case 'PATIENT':
+        return (
+          <>
+            <NavItem to="/dashboard/book" icon={Calendar} label="Book Appointment" />
+            <NavItem to="/dashboard/history" icon={Activity} label="Medical History" />
+          </>
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="flex h-screen overflow-hidden font-sans bg-slate-50">
+      
+      {/* Mobile Sidebar Overlay */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm lg:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-slate-200 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${
+          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        <div className="flex items-center justify-between h-20 px-6 border-b border-slate-100">
+          <Link
+            to="/"
+            className="flex items-center gap-2 text-xl md:text-2xl font-extrabold tracking-tight text-teal-600 transition-colors hover:text-teal-700"
+          >
+            <Stethoscope className="w-6 h-6" />
+            MediCare Sync
+          </Link>
+          <button 
+            onClick={() => setIsSidebarOpen(false)}
+            className="p-2 rounded-lg lg:hidden text-slate-400 hover:bg-slate-100"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="px-4 py-6 overflow-y-auto">
+          <div className="mb-4 text-xs font-bold tracking-wider uppercase text-slate-400 px-4">
+            Main Menu
+          </div>
+          <nav>
+            <NavItem to="/dashboard" icon={Home} label="Dashboard Overview" />
+            {renderNavLinks()}
+          </nav>
+        </div>
+      </aside>
+
+      {/* Main Content Wrapper */}
+      <div className="flex flex-col flex-1 w-full overflow-hidden">
+        
+        {/* Top Header */}
+        <header className="flex items-center justify-between h-20 px-6 bg-white border-b border-slate-200 z-30">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setIsSidebarOpen(true)}
+              className="p-2 rounded-lg lg:hidden text-slate-500 hover:bg-slate-100"
+            >
+              <Menu className="w-6 h-6" />
+            </button>
+            <div className="hidden sm:block">
+              <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                Welcome back, {user?.role === 'DOCTOR' ? `Dr. ${user?.lastName}` : user?.firstName} 👋
+              </h1>
+              <p className="text-sm text-slate-500">{user?.email}</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4 border-l border-slate-200 pl-4 md:pl-6">
+            <span className="hidden px-3 py-1 text-xs font-bold text-teal-700 bg-teal-100 rounded-full md:block">
+              {user?.role}
+            </span>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-red-600 transition-colors bg-red-50 rounded-xl hover:bg-red-100"
+            >
+              <LogOut className="w-4 h-4" />
+              <span className="hidden sm:block">Logout</span>
+            </button>
+          </div>
+        </header>
+
+        {/* Dynamic Page Content */}
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50 scroll-smooth">
+          <div className="container p-6 mx-auto md:p-8">
+            <Outlet />
+          </div>
+        </main>
+
+      </div>
+    </div>
+  );
+};
+
+export default DashboardLayout;
