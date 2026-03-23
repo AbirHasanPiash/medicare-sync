@@ -1,46 +1,43 @@
 import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Stethoscope } from 'lucide-react';
+import { Stethoscope, Loader2 } from 'lucide-react';
+import api from '../utils/api';
+import toast from 'react-hot-toast';
 
 const ResetPassword = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const { token } = useParams(); // Grabs the token from the URL
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const { token } = useParams();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
 
     if (password !== confirmPassword) {
-      return setError('Passwords do not match');
+      return toast.error('Passwords do not match');
     }
 
-    // Reuse your strong password validation
+    // Strong password validation
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
     if (!passwordRegex.test(password)) {
-      return setError('Password must be at least 8 chars with an uppercase, lowercase, and number.');
+      return toast.error('Password must be at least 8 chars with an uppercase, lowercase, and number.');
     }
 
-    try {
-      const res = await fetch(`http://localhost:5000/api/auth/reset-password/${token}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password }),
-      });
-      const data = await res.json();
+    setIsSubmitting(true);
 
-      if (res.ok) {
-        setSuccess('Password reset successfully! Redirecting to login...');
-        setTimeout(() => navigate('/login'), 2000);
-      } else {
-        setError(data.error || 'Something went wrong');
-      }
+    try {
+      await api.put(`/auth/reset-password/${token}`, { password });
+      
+      toast.success('Password reset successfully!');
+      toast('Redirecting to login...', { icon: '👋' });
+      
+      setTimeout(() => navigate('/login'), 2000);
     } catch (err) {
-      setError('Cannot connect to server');
+      toast.error(err.response?.data?.error || 'Failed to reset password. The link may be expired.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -61,32 +58,36 @@ const ResetPassword = () => {
           <p className="mt-2 text-slate-500">Please enter your new secure password.</p>
         </div>
 
-        {error && <div className="p-4 mb-6 text-sm font-medium text-red-700 bg-red-50 border border-red-100 rounded-xl">{error}</div>}
-        {success && <div className="p-4 mb-6 text-sm font-medium text-teal-700 bg-teal-50 border border-teal-100 rounded-xl">{success}</div>}
-
         <form onSubmit={handleSubmit}>
           <div className="mb-5">
             <label className="block mb-2 text-sm font-bold text-slate-700">New Password</label>
             <input
               type="password"
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition-colors"
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition-colors text-slate-800"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              disabled={isSubmitting}
             />
           </div>
           <div className="mb-8">
             <label className="block mb-2 text-sm font-bold text-slate-700">Confirm Password</label>
             <input
               type="password"
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition-colors"
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition-colors text-slate-800"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
+              disabled={isSubmitting}
             />
           </div>
-          <button type="submit" className="w-full px-4 py-3.5 font-bold text-white transition-all shadow-lg bg-teal-600 rounded-xl hover:bg-teal-700 hover:-translate-y-0.5">
-            Reset Password
+          <button 
+            type="submit" 
+            disabled={isSubmitting}
+            className="w-full flex items-center justify-center gap-2 px-4 py-3.5 font-bold text-white transition-all shadow-lg bg-teal-600 rounded-xl hover:bg-teal-700 hover:-translate-y-0.5 disabled:opacity-70 disabled:hover:translate-y-0"
+          >
+            {isSubmitting && <Loader2 className="w-5 h-5 animate-spin" />}
+            {isSubmitting ? 'Resetting...' : 'Reset Password'}
           </button>
         </form>
       </div>

@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Stethoscope } from 'lucide-react';
+import { Stethoscope, Loader2 } from 'lucide-react';
+import api from '../utils/api';
+import toast from 'react-hot-toast';
 
 const Register = () => {
   const [role, setRole] = useState('PATIENT');
@@ -12,8 +14,7 @@ const Register = () => {
     specialization: 'General',
     dateOfBirth: '',
   });
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -22,33 +23,26 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
 
     // Frontend Password Strength Validation
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
     if (!passwordRegex.test(formData.password)) {
-      setError('Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number.');
-      return;
+      return toast.error('Password must be at least 8 chars with an uppercase, lowercase, and number.');
     }
 
+    setIsSubmitting(true);
+
     try {
-      const response = await fetch('http://localhost:5000/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...formData, role }),
-      });
+      // Use the centralized Axios API instance
+      await api.post('/auth/register', { ...formData, role });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        setSuccess('Registration successful! Redirecting to login...');
-        setTimeout(() => navigate('/login'), 2000);
-      } else {
-        setError(data.error || 'Registration failed');
-      }
+      toast.success('Registration successful!');
+      toast('Redirecting to login...', { icon: '👋' });
+      
+      setTimeout(() => navigate('/login'), 2000);
     } catch (err) {
-      setError('Cannot connect to the server.');
+      toast.error(err.response?.data?.error || 'Registration failed');
+      setIsSubmitting(false);
     }
   };
 
@@ -70,7 +64,7 @@ const Register = () => {
       </div>
 
       {/* Register Card */}
-      <div className="w-full max-w-md p-8 sm:p-10 bg-white border shadow-xl rounded-3xl border-slate-100 z-10 mt-16 mb-8">
+      <div className="w-full max-w-md p-8 sm:p-10 bg-white border shadow-xl rounded-3xl border-slate-100 z-10 mt-20 mb-8">
         
         <div className="text-center mb-8">
           <h2 className="text-3xl font-extrabold text-slate-900">
@@ -107,18 +101,6 @@ const Register = () => {
           </button>
         </div>
 
-        {/* Feedback Messages */}
-        {error && (
-          <div className="p-4 mb-6 text-sm font-medium text-red-700 bg-red-50 border border-red-100 rounded-xl">
-            {error}
-          </div>
-        )}
-        {success && (
-          <div className="p-4 mb-6 text-sm font-medium text-teal-700 bg-teal-50 border border-teal-100 rounded-xl">
-            {success}
-          </div>
-        )}
-
         <form onSubmit={handleSubmit}>
           
           <div className="grid grid-cols-2 gap-4 mb-5">
@@ -129,10 +111,11 @@ const Register = () => {
               <input
                 type="text"
                 name="firstName"
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition-colors"
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition-colors text-slate-800"
                 placeholder="John"
                 onChange={handleChange}
                 required
+                disabled={isSubmitting}
               />
             </div>
             <div>
@@ -142,10 +125,11 @@ const Register = () => {
               <input
                 type="text"
                 name="lastName"
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition-colors"
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition-colors text-slate-800"
                 placeholder="Doe"
                 onChange={handleChange}
                 required
+                disabled={isSubmitting}
               />
             </div>
           </div>
@@ -157,10 +141,11 @@ const Register = () => {
             <input
               type="email"
               name="email"
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition-colors"
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition-colors text-slate-800"
               placeholder="you@example.com"
               onChange={handleChange}
               required
+              disabled={isSubmitting}
             />
           </div>
 
@@ -171,10 +156,11 @@ const Register = () => {
             <input
               type="password"
               name="password"
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition-colors"
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition-colors text-slate-800"
               placeholder="••••••••"
               onChange={handleChange}
               required
+              disabled={isSubmitting}
             />
           </div>
 
@@ -187,9 +173,10 @@ const Register = () => {
               <input
                 type="date"
                 name="dateOfBirth"
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition-colors"
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition-colors text-slate-800"
                 onChange={handleChange}
                 required
+                disabled={isSubmitting}
               />
             </div>
           )}
@@ -201,8 +188,9 @@ const Register = () => {
               </label>
               <select
                 name="specialization"
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition-colors"
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition-colors text-slate-800"
                 onChange={handleChange}
+                disabled={isSubmitting}
               >
                 <option value="General">General Practice</option>
                 <option value="Cardiology">Cardiology</option>
@@ -216,9 +204,11 @@ const Register = () => {
 
           <button
             type="submit"
-            className="w-full px-4 py-3.5 font-bold text-white transition-all shadow-lg bg-teal-600 rounded-xl hover:bg-teal-700 hover:-translate-y-0.5 hover:shadow-teal-500/30"
+            disabled={isSubmitting}
+            className="w-full flex justify-center items-center gap-2 px-4 py-3.5 font-bold text-white transition-all shadow-lg bg-teal-600 rounded-xl hover:bg-teal-700 hover:-translate-y-0.5 hover:shadow-teal-500/30 disabled:opacity-70 disabled:hover:translate-y-0 disabled:shadow-none"
           >
-            Create Account
+            {isSubmitting && <Loader2 className="w-5 h-5 animate-spin" />}
+            {isSubmitting ? 'Creating Account...' : 'Create Account'}
           </button>
         </form>
 

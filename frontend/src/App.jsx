@@ -4,14 +4,20 @@ import {
   Route,
   Navigate,
 } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './contexts/AuthContext';
-import Landing from './pages/Landing'; // Import the new Landing Page
+import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ProtectedRoute from './components/ProtectedRoute';
 import DashboardLayout from './components/DashboardLayout';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
+import BookAppointment from './pages/BookAppointment';
+import DoctorSchedule from './pages/DoctorSchedule';
+import DoctorLeaves from './pages/DoctorLeaves';
+import PatientHistory from './pages/PatientHistory';
+import ManageAvailability from './pages/ManageAvailability';
 
 const Home = () => (
   <div className="p-4 bg-white rounded shadow">Dashboard Overview</div>
@@ -25,6 +31,34 @@ const Unauthorized = () => (
 const App = () => {
   return (
     <AuthProvider>
+      <Toaster
+        position="top-center"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            fontFamily: 'Inter, sans-serif',
+            background: '#ffffff',
+            color: '#0f172a', // slate-900
+            boxShadow:
+              '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+            borderRadius: '1rem', // rounded-2xl
+            padding: '16px',
+            fontWeight: '500',
+          },
+          success: {
+            iconTheme: {
+              primary: '#0d9488', // teal-600
+              secondary: '#ffffff',
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: '#ef4444', // red-500
+              secondary: '#ffffff',
+            },
+          },
+        }}
+      />
       <Router>
         <Routes>
           {/* Public Routes */}
@@ -46,14 +80,10 @@ const App = () => {
               </Route>
 
               <Route element={<ProtectedRoute allowedRoles={['DOCTOR']} />}>
-                <Route
-                  path="schedule"
-                  element={<div>Schedule Component</div>}
-                />
-                <Route
-                  path="patients"
-                  element={<div>Patients Component</div>}
-                />
+                <Route path="schedule" element={<DoctorSchedule />} />
+                <Route path="leaves" element={<DoctorLeaves />} />
+                <Route path="availability" element={<ManageAvailability />} /> 
+                <Route path="patients" element={<div>Patients Component</div>} />
               </Route>
 
               <Route element={<ProtectedRoute allowedRoles={['STAFF']} />}>
@@ -62,11 +92,8 @@ const App = () => {
               </Route>
 
               <Route element={<ProtectedRoute allowedRoles={['PATIENT']} />}>
-                <Route
-                  path="book"
-                  element={<div>Book Appointment Component</div>}
-                />
-                <Route path="history" element={<div>History Component</div>} />
+                <Route path="book" element={<BookAppointment />} />
+                <Route path="history" element={<PatientHistory />} />
               </Route>
             </Route>
           </Route>

@@ -1,19 +1,27 @@
 import { useState, useContext } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../contexts/AuthContext';
+import toast from 'react-hot-toast';
+import ConfirmationModal from './ConfirmationModal';
 import { 
   Menu, X, LogOut, Home, Users, Calendar, 
-  Clock, CreditCard, Activity, FileText, Stethoscope 
+  Clock, CreditCard, Activity, Stethoscope, CalendarOff
 } from 'lucide-react';
 
 const DashboardLayout = () => {
   const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
   const location = useLocation();
+  
+  // State for Mobile Sidebar and Logout Modal
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
-  const handleLogout = () => {
+  // Triggered by the modal's confirm button
+  const executeLogout = () => {
+    setIsLogoutModalOpen(false);
     logout();
+    toast.success('Logged out successfully');
     navigate('/');
   };
 
@@ -24,20 +32,20 @@ const DashboardLayout = () => {
     return false;
   };
 
-  // Reusable NavLink component for consistent styling and mobile-closing
+  // Reusable NavLink component with upgraded premium active states
   const NavItem = ({ to, icon: Icon, label }) => {
     const active = isActive(to);
     return (
       <Link
         to={to}
         onClick={() => setIsSidebarOpen(false)}
-        className={`flex items-center gap-3 px-4 py-3 mb-1 font-medium rounded-xl transition-all duration-200 ${
+        className={`flex items-center gap-3 px-4 py-3 mb-1.5 font-bold rounded-xl transition-all duration-200 ${
           active
-            ? 'bg-teal-50 text-teal-700'
-            : 'text-slate-600 hover:bg-slate-50 hover:text-teal-600'
+            ? 'bg-teal-50 text-teal-700 shadow-sm border border-teal-100/50'
+            : 'text-slate-500 hover:bg-slate-100/70 hover:text-teal-600 border border-transparent'
         }`}
       >
-        <Icon className={`w-5 h-5 ${active ? 'text-teal-600' : 'text-slate-400'}`} />
+        <Icon className={`w-5 h-5 transition-colors ${active ? 'text-teal-600' : 'text-slate-400'}`} />
         {label}
       </Link>
     );
@@ -57,6 +65,8 @@ const DashboardLayout = () => {
           <>
             <NavItem to="/dashboard/schedule" icon={Calendar} label="My Schedule" />
             <NavItem to="/dashboard/patients" icon={Users} label="Patient Records" />
+            <NavItem to="/dashboard/leaves" icon={CalendarOff} label="Leave Management" />
+            <NavItem to="/dashboard/availability" icon={Clock} label="Clinic Hours" />
           </>
         );
       case 'STAFF':
@@ -84,28 +94,30 @@ const DashboardLayout = () => {
       {/* Mobile Sidebar Overlay */}
       {isSidebarOpen && (
         <div 
-          className="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm lg:hidden animate-in fade-in duration-200"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-slate-200 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${
+        className={`fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-slate-200 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 shadow-2xl lg:shadow-none ${
           isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         <div className="flex items-center justify-between h-20 px-6 border-b border-slate-100">
           <Link
-            to="/"
-            className="flex items-center gap-2 text-xl md:text-2xl font-extrabold tracking-tight text-teal-600 transition-colors hover:text-teal-700"
+            to="/dashboard"
+            className="flex items-center gap-2 text-xl font-extrabold tracking-tight text-teal-600 transition-colors hover:text-teal-700"
           >
-            <Stethoscope className="w-6 h-6" />
+            <div className="p-1.5 bg-teal-50 rounded-lg">
+              <Stethoscope className="w-6 h-6" />
+            </div>
             MediCare Sync
           </Link>
           <button 
             onClick={() => setIsSidebarOpen(false)}
-            className="p-2 rounded-lg lg:hidden text-slate-400 hover:bg-slate-100"
+            className="p-2 rounded-lg lg:hidden text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -126,29 +138,29 @@ const DashboardLayout = () => {
       <div className="flex flex-col flex-1 w-full overflow-hidden">
         
         {/* Top Header */}
-        <header className="flex items-center justify-between h-20 px-6 bg-white border-b border-slate-200 z-30">
+        <header className="flex items-center justify-between h-20 px-6 bg-white border-b border-slate-200 z-30 shadow-sm shadow-slate-100">
           <div className="flex items-center gap-4">
             <button
               onClick={() => setIsSidebarOpen(true)}
-              className="p-2 rounded-lg lg:hidden text-slate-500 hover:bg-slate-100"
+              className="p-2.5 rounded-xl lg:hidden text-slate-500 hover:bg-slate-100 transition-colors"
             >
               <Menu className="w-6 h-6" />
             </button>
             <div className="hidden sm:block">
-              <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+              <h1 className="text-xl font-extrabold text-slate-800 flex items-center gap-2">
                 Welcome back, {user?.role === 'DOCTOR' ? `Dr. ${user?.lastName}` : user?.firstName} 👋
               </h1>
-              <p className="text-sm text-slate-500">{user?.email}</p>
+              <p className="text-sm font-medium text-slate-500">{user?.email}</p>
             </div>
           </div>
 
           <div className="flex items-center gap-4 border-l border-slate-200 pl-4 md:pl-6">
-            <span className="hidden px-3 py-1 text-xs font-bold text-teal-700 bg-teal-100 rounded-full md:block">
+            <span className="hidden px-3.5 py-1.5 text-xs font-bold text-teal-700 bg-teal-50 border border-teal-100 rounded-full md:block shadow-sm">
               {user?.role}
             </span>
             <button
-              onClick={handleLogout}
-              className="flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-red-600 transition-colors bg-red-50 rounded-xl hover:bg-red-100"
+              onClick={() => setIsLogoutModalOpen(true)}
+              className="flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-red-600 transition-all bg-white border border-red-200 shadow-sm rounded-xl hover:bg-red-50 hover:border-red-300"
             >
               <LogOut className="w-4 h-4" />
               <span className="hidden sm:block">Logout</span>
@@ -157,13 +169,24 @@ const DashboardLayout = () => {
         </header>
 
         {/* Dynamic Page Content */}
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50 scroll-smooth">
-          <div className="container p-6 mx-auto md:p-8">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50/50 scroll-smooth relative">
+          <div className="container p-6 mx-auto md:p-8 max-w-7xl animate-in fade-in duration-300">
             <Outlet />
           </div>
         </main>
 
       </div>
+
+      {/* Reusable Logout Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={isLogoutModalOpen}
+        onClose={() => setIsLogoutModalOpen(false)}
+        onConfirm={executeLogout}
+        type="warning" // Uses the amber warning colors since logging out isn't "destructive" data-wise
+        title="Ready to leave?"
+        message="Are you sure you want to log out of your dashboard? You will need to sign in again to access your records."
+        confirmText="Yes, Logout"
+      />
     </div>
   );
 };

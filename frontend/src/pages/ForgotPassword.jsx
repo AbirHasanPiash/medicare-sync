@@ -1,32 +1,25 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Stethoscope } from 'lucide-react';
+import { Stethoscope, Loader2 } from 'lucide-react';
+import api from '../utils/api';
+import toast from 'react-hot-toast';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage('');
-    setError('');
+    setIsSubmitting(true);
 
     try {
-      const res = await fetch('http://localhost:5000/api/auth/forgot-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
-      const data = await res.json();
-
-      if (res.ok) {
-        setMessage(data.message);
-      } else {
-        setError(data.error || 'Something went wrong');
-      }
+      const res = await api.post('/auth/forgot-password', { email });
+      toast.success(res.data.message || 'Reset link sent to your email!');
+      setEmail('');
     } catch (err) {
-      setError('Cannot connect to server');
+      toast.error(err.response?.data?.error || 'Failed to send reset link.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -47,22 +40,25 @@ const ForgotPassword = () => {
           <p className="mt-2 text-slate-500">Enter your email and we'll send you a link to reset your password.</p>
         </div>
 
-        {error && <div className="p-4 mb-6 text-sm font-medium text-red-700 bg-red-50 border border-red-100 rounded-xl">{error}</div>}
-        {message && <div className="p-4 mb-6 text-sm font-medium text-teal-700 bg-teal-50 border border-teal-100 rounded-xl">{message}</div>}
-
         <form onSubmit={handleSubmit}>
           <div className="mb-8">
             <label className="block mb-2 text-sm font-bold text-slate-700">Email Address</label>
             <input
               type="email"
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition-colors"
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition-colors text-slate-800"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              disabled={isSubmitting}
             />
           </div>
-          <button type="submit" className="w-full px-4 py-3.5 font-bold text-white transition-all shadow-lg bg-teal-600 rounded-xl hover:bg-teal-700 hover:-translate-y-0.5">
-            Send Reset Link
+          <button 
+            type="submit" 
+            disabled={isSubmitting}
+            className="w-full flex items-center justify-center gap-2 px-4 py-3.5 font-bold text-white transition-all shadow-lg bg-teal-600 rounded-xl hover:bg-teal-700 hover:-translate-y-0.5 disabled:opacity-70 disabled:hover:translate-y-0"
+          >
+            {isSubmitting && <Loader2 className="w-5 h-5 animate-spin" />}
+            {isSubmitting ? 'Sending...' : 'Send Reset Link'}
           </button>
           <p className="mt-6 text-sm text-center text-slate-600">
             Remember your password? <Link to="/login" className="font-bold text-teal-600 transition-colors hover:text-teal-700">Log in</Link>

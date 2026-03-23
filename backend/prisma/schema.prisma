@@ -14,28 +14,54 @@ enum Role {
   STAFF
 }
 
+enum AppointmentStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+  RESCHEDULED
+}
+
+enum AppointmentType {
+  IN_PERSON
+  TELEHEALTH
+}
+
 model User {
-  id             String          @id @default(auto()) @map("_id") @db.ObjectId
-  firstName      String
-  lastName       String
-  email          String          @unique
-  password       String
-  role           Role            @default(PATIENT)
+  id                   String    @id @default(auto()) @map("_id") @db.ObjectId
+  firstName            String
+  lastName             String
+  email                String    @unique
+  password             String
+  phone                String?   // For SMS notifications/reminders
+  role                 Role      @default(PATIENT)
   resetPasswordToken   String?
   resetPasswordExpires DateTime?
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 
+  // Profiles
   doctorProfile  DoctorProfile?
   patientProfile PatientProfile?
   staffProfile   StaffProfile?
+
+  // Scheduling Relations
+  appointmentsAsPatient Appointment[]  @relation("PatientAppointments")
+  appointmentsAsDoctor  Appointment[]  @relation("DoctorAppointments")
+  blockedDates          BlockedDate[]  @relation("DoctorLeaves")
+  availabilities        Availability[] @relation("DoctorAvailabilities") 
+  
+  // EMR Relations
+  recordsAsPatient      MedicalRecord[] @relation("PatientRecords")
+  recordsAsDoctor       MedicalRecord[] @relation("DoctorRecords")
+  documentsAsPatient    Document[]      @relation("PatientDocuments")
+  uploadedDocuments     Document[]      @relation("UploadedDocuments")
 }
 
 model DoctorProfile {
-  id             String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId         String   @unique @db.ObjectId
+  id             String @id @default(auto()) @map("_id") @db.ObjectId
+  userId         String @unique @db.ObjectId
   specialization String
-  availableDays  String[]
+  slotDuration   Int    @default(30) // Duration in minutes (e.g., 30)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
@@ -45,6 +71,8 @@ model PatientProfile {
   userId      String   @unique @db.ObjectId
   dateOfBirth DateTime
   bloodGroup  String?
+  gender      String?  
+  allergies   String[] // Critical for EMR safety alerts
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
@@ -56,4 +84,108 @@ model StaffProfile {
   shift       String
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+
+// SCHEDULING & AVAILABILITY
+
+model Availability {
+  id          String          @id @default(auto()) @map("_id") @db.ObjectId
+  doctorId    String          @db.ObjectId
+  
+  dayOfWeek   String          // e.g., "Monday", "Tuesday"
+  startTime   String          // e.g., "09:00" (24-hour format)
+  endTime     String          // e.g., "13:00"
+  
+  type        AppointmentType @default(IN_PERSON)
+  location    String?         // e.g., "City Hospital, Room 302" or "Home Office"
+  
+  doctor User @relation("DoctorAvailabilities", fields: [doctorId], references: [id], onDelete: Cascade)
+}
+
+model BlockedDate {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  doctorId  String   @db.ObjectId
+  date      DateTime 
+  reason    String?  // e.g., "Sick Leave", "Conference"
+  createdAt DateTime @default(now())
+
+  doctor User @relation("DoctorLeaves", fields: [doctorId], references: [id], onDelete: Cascade)
+}
+
+model Appointment {
+  id          String            @id @default(auto()) @map("_id") @db.ObjectId
+  patientId   String            @db.ObjectId
+  doctorId    String            @db.ObjectId
+  
+  date        DateTime          
+  startTime   String            
+  endTime     String            
+  status      AppointmentStatus @default(SCHEDULED)
+  reason      String?           
+  
+  type        AppointmentType   @default(IN_PERSON)
+  location    String?           // Inherited from the Availability block at time of booking
+  meetingLink String?           // Zoom/Google Meet link for Telehealth
+  
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  patient User @relation("PatientAppointments", fields: [patientId], references: [id])
+  doctor  User @relation("DoctorAppointments", fields: [doctorId], references: [id])
+
+  // 1-to-1 relation with a medical record
+  medicalRecord MedicalRecord? 
+}
+
+
+// EMR (ELECTRONIC MEDICAL RECORDS)
+
+model MedicalRecord {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  patientId     String   @db.ObjectId
+  doctorId      String   @db.ObjectId
+  appointmentId String?  @unique @db.ObjectId 
+
+  diagnosis     String?
+  symptoms      String[]
+  treatmentPlan String?
+  clinicalNotes String?  // Private notes visible only to the doctor
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  patient       User         @relation("PatientRecords", fields: [patientId], references: [id])
+  doctor        User         @relation("DoctorRecords", fields: [doctorId], references: [id])
+  appointment   Appointment? @relation(fields: [appointmentId], references: [id])
+  
+  prescriptions Prescription[]
+}
+
+model Prescription {
+  id              String @id @default(auto()) @map("_id") @db.ObjectId
+  medicalRecordId String @db.ObjectId
+  
+  medicineName    String   
+  dosage          String // e.g., "500mg"
+  frequency       String // e.g., "1-0-1", "Twice a day"
+  duration        String // e.g., "7 days"
+  instructions    String? // Optional extra notes
+
+  medicalRecord   MedicalRecord @relation(fields: [medicalRecordId], references: [id], onDelete: Cascade)
+}
+
+model Document {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  patientId    String   @db.ObjectId
+  uploaderId   String   @db.ObjectId 
+  
+  title        String
+  fileUrl      String   // Cloudinary/AWS S3 link
+  documentType String   // e.g., "X-RAY", "LAB_REPORT", "PREVIOUS_PRESCRIPTION"
+  
+  createdAt    DateTime @default(now())
+
+  patient      User @relation("PatientDocuments", fields: [patientId], references: [id], onDelete: Cascade)
+  uploader     User @relation("UploadedDocuments", fields: [uploaderId], references: [id])
 }

@@ -1,25 +1,28 @@
 import { useState, useContext } from 'react';
 import { AuthContext } from '../contexts/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
-import { Stethoscope } from 'lucide-react';
+import { Stethoscope, Loader2 } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    setIsSubmitting(true);
 
     const result = await login(email, password);
 
     if (result.success) {
+      toast.success('Welcome back!');
       navigate('/dashboard');
     } else {
-      setError(result.error);
+      toast.error(result.error);
+      setIsSubmitting(false);
     }
   };
 
@@ -50,12 +53,6 @@ const Login = () => {
           </p>
         </div>
 
-        {error && (
-          <div className="p-4 mb-6 text-sm font-medium text-red-700 bg-red-50 border border-red-100 rounded-xl">
-            {error}
-          </div>
-        )}
-
         <form onSubmit={handleSubmit}>
           <div className="mb-5">
             <label className="block mb-2 text-sm font-bold text-slate-700">
@@ -63,11 +60,12 @@ const Login = () => {
             </label>
             <input
               type="email"
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition-colors"
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition-colors text-slate-800"
               placeholder="doctor@medicare.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              disabled={isSubmitting}
             />
           </div>
 
@@ -85,19 +83,22 @@ const Login = () => {
             </div>
             <input
               type="password"
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition-colors"
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition-colors text-slate-800"
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              disabled={isSubmitting}
             />
           </div>
 
           <button
             type="submit"
-            className="w-full px-4 py-3.5 font-bold text-white transition-all shadow-lg bg-teal-600 rounded-xl hover:bg-teal-700 hover:-translate-y-0.5 hover:shadow-teal-500/30"
+            disabled={isSubmitting}
+            className="w-full flex justify-center items-center gap-2 px-4 py-3.5 font-bold text-white transition-all shadow-lg bg-teal-600 rounded-xl hover:bg-teal-700 hover:-translate-y-0.5 hover:shadow-teal-500/30 disabled:opacity-70 disabled:hover:translate-y-0 disabled:shadow-none"
           >
-            Sign In
+            {isSubmitting && <Loader2 className="w-5 h-5 animate-spin" />}
+            {isSubmitting ? 'Signing in...' : 'Sign In'}
           </button>
 
           <p className="mt-6 text-sm text-center text-slate-600">
