@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 import authRoutes from './routes/authRoutes.js';
 import appointmentRoutes from './routes/appointmentRoutes.js';
 import documentRoutes from './routes/documentRoutes.js';
+import historyRoutes from './routes/historyRoutes.js';
 import patientPrescriptionRoutes from './routes/patientPrescriptionRoutes.js';
 import privateDoctorNoteRoutes from './routes/privateDoctorNoteRoutes.js';
 
@@ -21,6 +22,7 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/documents', documentRoutes);
+app.use('/api/history', historyRoutes);
 app.use('/api/patient-prescriptions', patientPrescriptionRoutes);
 app.use('/api/private-doctor-notes', privateDoctorNoteRoutes);
 

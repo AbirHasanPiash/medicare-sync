@@ -18,6 +18,7 @@ import {
   FileText,
   FileLock2,
   FolderOpen,
+  History,
 } from 'lucide-react';
 
 const NavItem = ({ to, icon, label, isActivePath, onNavigate }) => {
@@ -103,6 +104,12 @@ const DashboardLayout = () => {
               to="/dashboard/patients"
               icon={FileLock2}
               label="Private Notes"
+              {...navProps}
+            />
+            <NavItem
+              to="/dashboard/patient-medical-history"
+              icon={History}
+              label="Patient Medical History"
               {...navProps}
             />
             <NavItem

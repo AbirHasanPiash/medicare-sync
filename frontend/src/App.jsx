@@ -20,6 +20,7 @@ import PatientHistory from './pages/PatientHistory';
 import ManageAvailability from './pages/ManageAvailability';
 import DigitalPrescriptions from './pages/DigitalPrescriptions';
 import MedicalDocuments from './pages/MedicalDocuments';
+import PatientMedicalHistory from './pages/PatientMedicalHistory';
 import PrivateDoctorNotes from './pages/PrivateDoctorNotes';
 
 const Home = () => (
@@ -87,6 +88,14 @@ const App = () => {
                 <Route path="leaves" element={<DoctorLeaves />} />
                 <Route path="availability" element={<ManageAvailability />} />
                 <Route path="patients" element={<PrivateDoctorNotes />} />
+                <Route
+                  path="patient-medical-history"
+                  element={<PatientMedicalHistory />}
+                />
+                <Route
+                  path="patient-medical-history/:patientId"
+                  element={<PatientMedicalHistory />}
+                />
               </Route>
 
               <Route element={<ProtectedRoute allowedRoles={['STAFF']} />}>
