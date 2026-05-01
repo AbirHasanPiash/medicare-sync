@@ -8,16 +8,16 @@ const prisma = new PrismaClient();
 
 export const registerUser = async (req, res) => {
   try {
-    const { 
-      firstName, 
-      lastName, 
-      email, 
-      password, 
-      role, 
-      specialization, 
-      dateOfBirth, 
-      designation, 
-      shift 
+    const {
+      firstName,
+      lastName,
+      email,
+      password,
+      role,
+      specialization,
+      dateOfBirth,
+      designation,
+      shift,
     } = req.body;
 
     // Basic validation to ensure required fields aren't missing
@@ -27,7 +27,8 @@ export const registerUser = async (req, res) => {
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({ where: { email } });
-    if (existingUser) return res.status(400).json({ error: 'User already exists' });
+    if (existingUser)
+      return res.status(400).json({ error: 'User already exists' });
 
     // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -40,33 +41,43 @@ export const registerUser = async (req, res) => {
         email,
         password: hashedPassword,
         role,
-        doctorProfile: role === 'DOCTOR' 
-          ? { create: { specialization: specialization || 'General', availableDays: [] } } 
-          : undefined,
-        patientProfile: role === 'PATIENT' 
-          ? { create: { dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : new Date() } } 
-          : undefined,
-        staffProfile: role === 'STAFF'
-          ? { create: { designation: designation || 'Staff', shift: shift || 'Morning' } }
-          : undefined,
+        doctorProfile:
+          role === 'DOCTOR'
+            ? { create: { specialization: specialization || 'General' } }
+            : undefined,
+        patientProfile:
+          role === 'PATIENT'
+            ? {
+                create: {
+                  dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : new Date(),
+                },
+              }
+            : undefined,
+        staffProfile:
+          role === 'STAFF'
+            ? {
+                create: {
+                  designation: designation || 'Staff',
+                  shift: shift || 'Morning',
+                },
+              }
+            : undefined,
       },
-      include: { 
-        doctorProfile: true, 
+      include: {
+        doctorProfile: true,
         patientProfile: true,
-        staffProfile: true
+        staffProfile: true,
       },
     });
 
     // Strip the password out before sending the response
     const { password: _, ...userWithoutPassword } = newUser;
     res.status(201).json(userWithoutPassword);
-
   } catch (error) {
     console.error('Registration Error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 };
-
 
 export const loginUser = async (req, res) => {
   try {
@@ -103,13 +114,11 @@ export const loginUser = async (req, res) => {
       token,
       user: userWithoutPassword,
     });
-
   } catch (error) {
     console.error('Login Error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 };
-
 
 export const getMe = async (req, res) => {
   try {
@@ -127,7 +136,7 @@ export const getMe = async (req, res) => {
     }
 
     const { password: _, ...userWithoutPassword } = user;
-    
+
     res.status(200).json({ user: userWithoutPassword });
   } catch (error) {
     console.error('Get Me Error:', error);
@@ -135,22 +144,28 @@ export const getMe = async (req, res) => {
   }
 };
 
-
 export const forgotPassword = async (req, res) => {
   try {
-    const user = await prisma.user.findUnique({ where: { email: req.body.email } });
+    const user = await prisma.user.findUnique({
+      where: { email: req.body.email },
+    });
 
     if (!user) {
-      // For security, we don't explicitly say "User not found". 
+      // For security, we don't explicitly say "User not found".
       // We just pretend it sent so attackers can't fish for valid emails.
-      return res.status(200).json({ message: 'If that email exists, a reset link has been sent.' });
+      return res
+        .status(200)
+        .json({ message: 'If that email exists, a reset link has been sent.' });
     }
 
     // Generate a secure random token
     const resetToken = crypto.randomBytes(32).toString('hex');
-    
+
     // Hash it before saving to the database for security
-    const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+    const hashedToken = crypto
+      .createHash('sha256')
+      .update(resetToken)
+      .digest('hex');
 
     // Set expiration to 1 hour from now
     const resetPasswordExpires = new Date(Date.now() + 60 * 60 * 1000);
@@ -216,7 +231,10 @@ export const forgotPassword = async (req, res) => {
 export const resetPassword = async (req, res) => {
   try {
     // Hash the token from the URL to match what is in the database
-    const hashedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
+    const hashedToken = crypto
+      .createHash('sha256')
+      .update(req.params.token)
+      .digest('hex');
 
     const user = await prisma.user.findFirst({
       where: {

@@ -18,6 +18,9 @@ import DoctorSchedule from './pages/DoctorSchedule';
 import DoctorLeaves from './pages/DoctorLeaves';
 import PatientHistory from './pages/PatientHistory';
 import ManageAvailability from './pages/ManageAvailability';
+import DigitalPrescriptions from './pages/DigitalPrescriptions';
+import MedicalDocuments from './pages/MedicalDocuments';
+import PrivateDoctorNotes from './pages/PrivateDoctorNotes';
 
 const Home = () => (
   <div className="p-4 bg-white rounded shadow">Dashboard Overview</div>
@@ -82,8 +85,8 @@ const App = () => {
               <Route element={<ProtectedRoute allowedRoles={['DOCTOR']} />}>
                 <Route path="schedule" element={<DoctorSchedule />} />
                 <Route path="leaves" element={<DoctorLeaves />} />
-                <Route path="availability" element={<ManageAvailability />} /> 
-                <Route path="patients" element={<div>Patients Component</div>} />
+                <Route path="availability" element={<ManageAvailability />} />
+                <Route path="patients" element={<PrivateDoctorNotes />} />
               </Route>
 
               <Route element={<ProtectedRoute allowedRoles={['STAFF']} />}>
@@ -94,6 +97,18 @@ const App = () => {
               <Route element={<ProtectedRoute allowedRoles={['PATIENT']} />}>
                 <Route path="book" element={<BookAppointment />} />
                 <Route path="history" element={<PatientHistory />} />
+                <Route path="documents" element={<MedicalDocuments />} />
+              </Route>
+
+              <Route
+                element={
+                  <ProtectedRoute allowedRoles={['DOCTOR', 'PATIENT']} />
+                }
+              >
+                <Route
+                  path="prescriptions"
+                  element={<DigitalPrescriptions />}
+                />
               </Route>
             </Route>
           </Route>
