@@ -9,6 +9,7 @@ import documentRoutes from './routes/documentRoutes.js';
 import historyRoutes from './routes/historyRoutes.js';
 import patientPrescriptionRoutes from './routes/patientPrescriptionRoutes.js';
 import privateDoctorNoteRoutes from './routes/privateDoctorNoteRoutes.js';
+import dashboardRoutes from './routes/dashboardRoutes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -25,6 +26,7 @@ app.use('/api/documents', documentRoutes);
 app.use('/api/history', historyRoutes);
 app.use('/api/patient-prescriptions', patientPrescriptionRoutes);
 app.use('/api/private-doctor-notes', privateDoctorNoteRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 const PORT = process.env.PORT || 5000;
 

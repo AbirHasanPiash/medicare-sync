@@ -17,6 +17,7 @@
   "description": "",
   "main": "index.js",
   "dependencies": {
+    "@react-pdf/renderer": "^4.5.1",
     "ansi-escapes": "^7.3.0",
     "ansi-regex": "^6.2.2",
     "ansi-styles": "^6.2.3",

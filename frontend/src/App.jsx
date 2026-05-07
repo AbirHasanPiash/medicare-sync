@@ -22,10 +22,8 @@ import DigitalPrescriptions from './pages/DigitalPrescriptions';
 import MedicalDocuments from './pages/MedicalDocuments';
 import PatientMedicalHistory from './pages/PatientMedicalHistory';
 import PrivateDoctorNotes from './pages/PrivateDoctorNotes';
+import DashboardOverview from './pages/DashboardOverview';
 
-const Home = () => (
-  <div className="p-4 bg-white rounded shadow">Dashboard Overview</div>
-);
 const Unauthorized = () => (
   <div className="p-4 text-red-700 bg-red-100 rounded shadow">
     You do not have permission to view this page.
@@ -76,7 +74,7 @@ const App = () => {
           {/* Protected Dashboard Routes */}
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<DashboardLayout />}>
-              <Route index element={<Home />} />
+              <Route index element={<DashboardOverview />} />
 
               <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
                 <Route path="revenue" element={<div>Revenue Component</div>} />
