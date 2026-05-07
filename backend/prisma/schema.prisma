@@ -55,6 +55,8 @@ model User {
   recordsAsDoctor       MedicalRecord[] @relation("DoctorRecords")
   documentsAsPatient    Document[]      @relation("PatientDocuments")
   uploadedDocuments     Document[]      @relation("UploadedDocuments")
+  privateNotesAsPatient PrivateDoctorNote[] @relation("PatientPrivateNotes")
+  privateNotesAsDoctor  PrivateDoctorNote[] @relation("DoctorPrivateNotes")
 }
 
 model DoctorProfile {
@@ -136,6 +138,7 @@ model Appointment {
 
   // 1-to-1 relation with a medical record
   medicalRecord MedicalRecord? 
+  privateDoctorNotes PrivateDoctorNote[]
 }
 
 
@@ -188,4 +191,21 @@ model Document {
 
   patient      User @relation("PatientDocuments", fields: [patientId], references: [id], onDelete: Cascade)
   uploader     User @relation("UploadedDocuments", fields: [uploaderId], references: [id])
+}
+
+model PrivateDoctorNote {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  doctorId      String   @db.ObjectId
+  patientId     String   @db.ObjectId
+  appointmentId String?  @db.ObjectId
+  content       String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  doctor      User         @relation("DoctorPrivateNotes", fields: [doctorId], references: [id], onDelete: Cascade)
+  patient     User         @relation("PatientPrivateNotes", fields: [patientId], references: [id], onDelete: Cascade)
+  appointment Appointment? @relation(fields: [appointmentId], references: [id])
+
+  @@index([doctorId, patientId, createdAt])
+  @@index([appointmentId])
 }

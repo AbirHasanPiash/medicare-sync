@@ -38,6 +38,7 @@
     "micromatch": "^4.0.8",
     "mimic-function": "^5.0.1",
     "onetime": "^7.0.0",
+    "pdfkit": "^0.18.0",
     "picomatch": "^2.3.1",
     "restore-cursor": "^5.1.0",
     "rfdc": "^1.4.1",

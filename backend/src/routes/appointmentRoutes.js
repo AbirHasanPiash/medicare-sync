@@ -1,17 +1,18 @@
 import express from 'express';
-import { 
-  getDoctorsDirectory, 
-  getAvailableSlots, 
-  bookAppointment, 
-  getMyAppointments, 
+import {
+  getDoctorsDirectory,
+  getAvailableSlots,
+  bookAppointment,
+  getMyAppointments,
   updateAppointmentStatus,
   getBlockedDates,
   addBlockedDate,
   deleteBlockedDate,
   getAvailabilities,
   addAvailability,
-  deleteAvailability
+  deleteAvailability,
 } from '../controllers/appointmentController.js';
+import { upsertPrescription } from '../controllers/prescriptionController.js';
 import { verifyToken, requireRole } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
@@ -29,10 +30,37 @@ router.put('/:appointmentId', verifyToken, updateAppointmentStatus);
 
 router.get('/blocks', verifyToken, requireRole(['DOCTOR']), getBlockedDates);
 router.post('/blocks', verifyToken, requireRole(['DOCTOR']), addBlockedDate);
-router.delete('/blocks/:id', verifyToken, requireRole(['DOCTOR']), deleteBlockedDate);
+router.delete(
+  '/blocks/:id',
+  verifyToken,
+  requireRole(['DOCTOR']),
+  deleteBlockedDate
+);
 
-router.get('/availabilities', verifyToken, requireRole(['DOCTOR']), getAvailabilities);
-router.post('/availabilities', verifyToken, requireRole(['DOCTOR']), addAvailability);
-router.delete('/availabilities/:id', verifyToken, requireRole(['DOCTOR']), deleteAvailability);
+router.get(
+  '/availabilities',
+  verifyToken,
+  requireRole(['DOCTOR']),
+  getAvailabilities
+);
+router.post(
+  '/availabilities',
+  verifyToken,
+  requireRole(['DOCTOR']),
+  addAvailability
+);
+router.delete(
+  '/availabilities/:id',
+  verifyToken,
+  requireRole(['DOCTOR']),
+  deleteAvailability
+);
+
+router.post(
+  '/prescriptions',
+  verifyToken,
+  requireRole(['DOCTOR']),
+  upsertPrescription
+);
 
 export default router;
